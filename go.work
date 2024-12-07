@@ -1,0 +1,7 @@
+go 1.23.2
+
+use (
+	./go-aoc
+	./go-aoc-solutions
+	./mysolvers
+)
