@@ -73,3 +73,89 @@ go-aoc-2024 main() running
 calling aoc.SayHello() from other module in workspace
 Hello, World! (from go-aoc/main.go SayHello())
 ```
+
+## .go file location
+
+I added a function in the `aoc` library.   This uses `runtime.Caller(n)` which
+will give the path to the code file.  If called with `0` it would return
+the current `.go` file.   When called with `1`, it returns the path of the
+`.go` file with the function that made the call to `GetDir()`.   I'm guessing
+this can walk back up the call stack.
+
+```go
+func GetDir() string {
+	_, filename, _, _ := runtime.Caller(1)
+	return filepath.Dir(filename)
+}
+```
+
+This will be handy for me how I want to re-arrange the puzzles.  I want to
+be able to create a directory for the day and just create a single file.
+I'm thinking one of two things though:
+
+1. By convention have 'sample.txt' and 'index.txt' in the same directory for
+the tests.  Run the tests with `go run 2024\1\main.go`
+2. Have a main app that uses `cobra-cli` and can be called easily with arguments
+like `go run . 2024day1`.
+
+For the simple one, I'm thinking of calling it like this:
+
+```go
+func main() {
+    aoc.SolveLocal(part1, part2)
+}
+
+func part1(contents string) string {
+    return aoc.Output(123) // use %v for any type
+}
+
+func part2(contents string) string {
+    return "tbd"
+}
+```
+
+I to use all the command-line options, I would need a little more.
+I like the simplicity above though.  It keeps my solution files
+small.
+
+```go
+func init() {
+    aoc.RegisterDay(2024, 1, part1, part2)
+}
+
+// ... Part1 and Part2 from above
+```
+
+This is pretty easy too.   In this, I think I would have a file replacing
+`root.go` in my old repo to create the root command:
+
+```go
+func init() {
+	cobra.OnInitialize(initConfig)
+    //... create root command, handle config and parameters
+```
+
+And RegisterDay would create the command and add it to root:
+
+```go
+// use map for year so day is sub-command of appropriate year?
+// map[int]cobra.Command
+
+func RegisterDay(year, day int, part1, part2 func(string) string) {
+    var cmd = &cobra.Command{
+        Use:   fmt.Sprintf("%d-%d", year, day),
+        Short: fmt.Sprintf(`Advent of Code %d day %d
+https://adventofcode.com/%d/day/%d`, year, day, year, day),
+        Long:  ``,
+        Run: func(cmd *cobra.Command, args []string) {
+        }
+    }
+    rootCmd.AddCommand
+}
+```
+
+Thinking now I may want to have each year be a subcommand, and each day a
+subcommand of that year's command.   Then this would run 2024 day 1
+
+    go run . 2024 1
+
