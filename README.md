@@ -27,7 +27,7 @@ Creating workspace and adding the two modules (from root):
 In the 'go-aoc' folder for my library I just created a 'main.go'
 file with the package name 'aoc':
 
-```
+```go
 package aoc
 
 import "fmt"
@@ -47,3 +47,29 @@ found it in the workspace without me ever having to actually
 put the code on github.   The workspace file knows where they
 are.
 
+```go
+package main
+
+import (
+	"fmt"
+
+	"github.com/JasonGoemaat/go-aoc"
+)
+
+func main() {
+	fmt.Println("go-aoc-2024 main() running")
+	fmt.Println("calling aoc.SayHello() from other module in workspace")
+	aoc.SayHello()
+}
+```
+
+Running the app in `go-aoc-2024` shows the order of execution:
+
+```go
+PS C:\git\go\advent-workspace\go-aoc-2024> go run .
+go-aoc/main.go init() running
+go-aoc-2024 init() running
+go-aoc-2024 main() running
+calling aoc.SayHello() from other module in workspace
+Hello, World! (from go-aoc/main.go SayHello())
+```
