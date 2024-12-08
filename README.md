@@ -89,6 +89,8 @@ func GetDir() string {
 }
 ```
 
+## Re-organization of puzzle repos
+
 This will be handy for me how I want to re-arrange the puzzles.  I want to
 be able to create a directory for the day and just create a single file.
 I'm thinking one of two things though:
