@@ -1,6 +1,7 @@
 package aoc
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -25,11 +26,19 @@ func solveFile(puzzlePath string, parts ...func(string) interface{}) {
 	}
 	fmt.Printf("Using: %s\n", fileName)
 	for i, part := range parts {
+		// check for existing file to override for this test
+		// Example: 2024 Day 3 has a different sample for part 2,
+		// so this looks for a file called 'sample2.txt' when
+		// processing index 1 representing part 2
 		startTime := time.Now()
 		result := part(contents)
 		endTime := time.Now()
 		ms := endTime.Sub(startTime).Milliseconds()
-		fmt.Printf("  Part %d in %d ms: %v\n", i+1, ms, result)
+		if len(parts) > 1 {
+			fmt.Printf("  Part %d in %d ms: %v\n", i+1, ms, result)
+		} else {
+			fmt.Printf("  Solved in %d ms: %v\n", ms, result)
+		}
 	}
 }
 
@@ -45,4 +54,43 @@ func SolveLocal(parts ...func(string) interface{}) {
 	solveFile(samplePath, parts...)
 	inputPath := filepath.Join(dir, "input.txt")
 	solveFile(inputPath, parts...)
+}
+
+// sample call: aoc.Local(part1, "Part1", "sample.txt", 14)
+func Local(solver func(string) interface{}, name string, fileName string, expected interface{}) {
+	_, caller, _, _ := runtime.Caller(1)
+	callerDir := filepath.Dir(caller)
+	inputPath := filepath.Join(callerDir, fileName)
+	contents, _ := loadString(inputPath)
+	startTime := time.Now()
+	result := solver(contents)
+	endTime := time.Now()
+	ms := endTime.Sub(startTime).Milliseconds()
+	if JsonEquals(result, expected) {
+		fmt.Printf("%dms %s(%q) = %v (GOOD)\n", ms, name, fileName, result)
+	} else {
+		fmt.Printf("%dms %s(%q) = %v (BAD - Expected %v)\n", ms, name, fileName, result, expected)
+	}
+}
+
+func SolveALocal(name string, solver func(string) interface{}, expected interface{}) {
+	_, filename, _, _ := runtime.Caller(1)
+	dir := filepath.Dir(filename)
+	puzzlePath := filepath.Join(dir, name)
+	solveFile(puzzlePath, solver)
+	fmt.Printf("        Expected: %v\n", expected)
+}
+
+func JsonString(value interface{}) string {
+	bytes, err := json.Marshal(value)
+	if err != nil {
+		return fmt.Sprintf("%v", value)
+	}
+	return string(bytes)
+}
+
+func JsonEquals(value1, value2 interface{}) bool {
+	string1 := JsonString(value1)
+	string2 := JsonString(value2)
+	return string1 == string2
 }
