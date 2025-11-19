@@ -87,6 +87,25 @@ func SolveLocal(parts ...func(string) interface{}) {
 	solveFile(inputPath, parts...)
 }
 
+func LocalArgs(solver func(string, ...interface{}) interface{}, name string, fileName string, expected interface{}, args ...interface{}) {
+	_, caller, _, _ := runtime.Caller(1)
+	callerDir := filepath.Dir(caller)
+	inputPath := filepath.Join(callerDir, fileName)
+	contents, _ := loadString(inputPath)
+	if len(contents) == 0 {
+		fmt.Printf("EMPTY FILE: %s\n", fileName)
+	}
+	startTime := time.Now()
+	result := solver(contents, args...)
+	endTime := time.Now()
+	ms := endTime.Sub(startTime).Milliseconds()
+	if JsonEquals(result, expected) {
+		fmt.Printf("%dms %s(%q) = %v (GOOD)\n", ms, name, fileName, result)
+	} else {
+		fmt.Printf("%dms %s(%q) = %v (BAD - Expected %v)\n", ms, name, fileName, result, expected)
+	}
+}
+
 // sample call: aoc.Local(part1, "Part1", "sample.aoc", 14)
 func Local(solver func(string) interface{}, name string, fileName string, expected interface{}) {
 	_, caller, _, _ := runtime.Caller(1)

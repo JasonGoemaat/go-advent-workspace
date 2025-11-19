@@ -63,6 +63,11 @@ func ParseLines(content string) []string {
 	return lines
 }
 
+func ParseInt(numberString string) int {
+	i, _ := strconv.Atoi(numberString)
+	return i
+}
+
 // Parse all numbers in possibly multi-line content into a slice.  Used by
 // parseIntsPerLine and ParseLinesToInts.
 func ParseInts(content string) []int {
