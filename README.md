@@ -1,5 +1,17 @@
 # Workspace - Advent of Code
 
+## Quickstart
+
+Work in `go-aoc-solutions`.  One directory per year, one subdirectory
+per day, i.e. `go-aoc-solutions/2015/1`.
+
+Then I will create `sample.aoc` and paste in the sample puzzle data and
+download the input to `input.aoc`.
+
+And finally a `main.go`
+
+## Notes
+
 Thinking of creating a `go-aoc` module that I will use in other modules for
 creating solvers.
 
