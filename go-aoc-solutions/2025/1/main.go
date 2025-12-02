@@ -11,11 +11,11 @@ import (
 
 func main() {
 	// https://adventofcode.com/2024/day/14
-	// aoc.Local(part1, "part1", "sample.aoc", 3)
-	// aoc.Local(part1, "part1", "input.aoc", 1158)
-	// aoc.Local(part2, "part2", "sample.aoc", 6)
-	// aoc.Local(part2, "part2", "input.aoc", 6860)
-	//	aoc.Local(part2Faster, "part2Faster", "sample.aoc", 6)
+	aoc.Local(part1, "part1", "sample.aoc", 3)
+	aoc.Local(part1, "part1", "input.aoc", 1158)
+	aoc.Local(part2, "part2", "sample.aoc", 6)
+	aoc.Local(part2, "part2", "input.aoc", 6860)
+	aoc.Local(part2Faster, "part2Faster", "sample.aoc", 6)
 	aoc.Local(part2Faster, "part2Faster", "input.aoc", 6860)
 	aoc.Local(part2Simpler, "part2Simpler", "input.aoc", 6860)
 }
