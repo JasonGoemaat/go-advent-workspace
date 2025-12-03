@@ -1,6 +1,6 @@
 module github.com/JasonGoemaat/go-aoc-solutions
 
-go 1.23.2
+go 1.25.5
 
 require (
 	github.com/JasonGoemaat/go-aoc v0.0.7
