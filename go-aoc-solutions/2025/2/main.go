@@ -22,6 +22,9 @@ type IntRange struct {
 func ParseIntRanges(content string) []IntRange {
 	reWholeNumberRange := regexp.MustCompile(`(\d+)-(\d+)`)
 	matches := reWholeNumberRange.FindAllStringSubmatch(content, -1)
+	// Array of string arrays for the matches.
+	// Each match array has 3 elements:
+	// 0: full match, 1: first number, 2: second number
 	results := make([]IntRange, len(matches))
 	for i, match := range matches {
 		if len(match) == 3 {
