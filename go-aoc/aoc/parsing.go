@@ -68,6 +68,29 @@ func ParseInt(numberString string) int {
 	return i
 }
 
+type IntRange struct {
+	Start int
+	End   int
+}
+
+var reNumberRange = regexp.MustCompile(`(\d+)-(\d+)`)
+
+func ParseIntRange(rangeString string) IntRange {
+	matches := reNumberRange.FindSubmatch([]byte(rangeString))
+	start, _ := strconv.Atoi(string(matches[1]))
+	end, _ := strconv.Atoi(string(matches[2]))
+	return IntRange{Start: start, End: end}
+}
+
+func ParseIntRanges(contents string) []IntRange {
+	lines := ParseLines(contents)
+	results := make([]IntRange, len(lines))
+	for i, line := range lines {
+		results[i] = ParseIntRange(line)
+	}
+	return results
+}
+
 // Parse all numbers in possibly multi-line content into a slice.  Used by
 // parseIntsPerLine and ParseLinesToInts.
 func ParseInts(content string) []int {

@@ -10,6 +10,14 @@ func (area Area) Get(row, col int) byte {
 	return area.GetIndex(row*area.Width + col)
 }
 
+func (area Area) Set(row, col int, value byte) {
+	if !area.Inside(row, col) {
+		return
+	}
+	index := (row*area.Width + col)
+	area.Data[index] = value
+}
+
 func (area Area) GetIndex(index int) byte {
 	return area.Data[index]
 }
