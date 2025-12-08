@@ -1,5 +1,7 @@
 package aoc
 
+import "strings"
+
 type Area struct {
 	Width  int
 	Height int
@@ -57,4 +59,14 @@ func ParseArea(content string) *Area {
 		copy(area.Data[row*area.Width:], []byte(line))
 	}
 	return &area
+}
+
+func (area *Area) String() string {
+	lines := make([]string, area.Height)
+	for i := 0; i < area.Height; i++ {
+		firstIndex := i * area.Width
+		lastIndex := firstIndex + area.Width
+		lines[i] = string(area.Data[firstIndex:lastIndex])
+	}
+	return strings.Join(lines, "\n")
 }
