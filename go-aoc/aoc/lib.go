@@ -106,6 +106,14 @@ func LocalArgs(solver func(string, ...interface{}) interface{}, name string, fil
 	}
 }
 
+func GetLocalFile(fileName string) string {
+	_, caller, _, _ := runtime.Caller(1)
+	callerDir := filepath.Dir(caller)
+	inputPath := filepath.Join(callerDir, fileName)
+	contents, _ := loadString(inputPath)
+	return contents
+}
+
 // sample call: aoc.Local(part1, "Part1", "sample.aoc", 14)
 func Local(solver func(string) interface{}, name string, fileName string, expected interface{}) {
 	_, caller, _, _ := runtime.Caller(1)

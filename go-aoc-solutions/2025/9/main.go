@@ -11,7 +11,7 @@ func main() {
 	aoc.Local(part1, "part1", "sample.aoc", 50)
 	aoc.Local(part1, "part1", "input.aoc", 4776487744)
 	aoc.Local(part2, "part2", "sample.aoc", 24)
-	aoc.Local(part2, "part2", "input.aoc", 111936242)
+	aoc.Local(part2, "part2", "input.aoc", 1560299548)
 }
 
 func CalculateArea(a, b []int) int {
@@ -122,29 +122,19 @@ func part2(content string) interface{} {
 
 	maxArea := 0
 	invalidCount := 0
-	for i := 0; i < len(puzzle.HorizontalSides)-1; i++ {
-		for j := i + 1; j < len(puzzle.HorizontalSides); j++ {
-			s1 := puzzle.HorizontalSides[i]
-			s2 := puzzle.HorizontalSides[j]
-			if s1.X1 > s2.X2 || s2.X1 > s1.X2 {
-				// non-overlapping
-				break
+	for i := 0; i < len(puzzle.Ints)-1; i++ {
+		for j := i + 1; j < len(puzzle.Ints); j++ {
+			x1, x2 := puzzle.Ints[i][0], puzzle.Ints[j][0]
+			y1, y2 := puzzle.Ints[i][1], puzzle.Ints[j][1]
+			if x2 < x1 {
+				x1, x2 = x2, x1
 			}
-			minY, maxY := s1.Y1, s2.Y1
-			if minY > maxY {
-				minY, maxY = maxY, minY
+			if y2 < y1 {
+				y1, y2 = y2, y1
 			}
-			minX, maxX := s1.X1, s1.X2
-			if s2.X1 < minX {
-				minX = s2.X1
-			}
-			if s2.X2 > maxX {
-				maxX = s2.X2
-			}
-			dx := maxX - minX + 1
-			dy := maxY - minY + 1
+			dx := x2 - x1 + 1
+			dy := y2 - y1 + 1
 			area := dx * dy
-
 			valid := true
 
 			// check for hoizontal overlapping lines between
@@ -152,24 +142,24 @@ func part2(content string) interface{} {
 				// check horizontal lines that intersect the left or right
 				// sides of our rectangle
 
-				if side.Y1 <= minY {
+				if side.Y1 <= y1 {
 					// ignore horizontal lines 'above' our rectangle (or on it)
 					continue
 				}
 
-				if side.Y1 >= maxY {
+				if side.Y1 >= y2 {
 					// ignore horizontal lines 'below' our rectangle (or on it)
 					continue
 				}
 
 				// intersect right side if right is on or greater and left is less
-				if side.X1 < maxX && side.X2 >= maxX {
+				if side.X1 < x2 && side.X2 >= x2 {
 					valid = false
 					break
 				}
 
 				// intersect left side if left is on or less and right is greater
-				if side.X1 <= minX && side.X2 > minX {
+				if side.X1 <= x1 && side.X2 > x1 {
 					valid = false
 					break
 				}
@@ -177,20 +167,20 @@ func part2(content string) interface{} {
 
 			// check for vertical overlapping lines between
 			for _, side := range puzzle.VerticalSides {
-				if side.X1 <= minX {
+				if side.X1 <= x1 {
 					continue // completely leftof our box
 				}
 
-				if side.X1 >= maxX {
+				if side.X1 >= x2 {
 					continue // completely right of our box
 				}
 
-				if side.Y1 < maxY && side.Y2 >= maxY {
+				if side.Y1 < y2 && side.Y2 >= y2 {
 					valid = false // intersects box bottom
 					break
 				}
 
-				if side.Y1 <= minY && side.Y2 > minY {
+				if side.Y1 <= y1 && side.Y2 > y1 {
 					valid = false // intersects box top
 					break
 				}
@@ -198,8 +188,8 @@ func part2(content string) interface{} {
 
 			// if central point is outside polygon, is invalid
 			if valid {
-				centerX := (minX + maxX) / 2
-				centerY := (minY + maxY) / 2
+				centerX := (x1 + x2) / 2
+				centerY := (y1 + y2) / 2
 				isInside := IsInside(&puzzle, centerX, centerY)
 				if !isInside {
 					valid = false
