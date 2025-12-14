@@ -7,10 +7,10 @@ import (
 )
 
 func main() {
-	// aoc.Local(part1, "part1", "sample.aoc", 5)
-	// aoc.Local(part1, "part1", "input.aoc", 772)
-	// aoc.Local(part2, "part2", "sample2.aoc", 2)
-	aoc.Local(part2, "part2", "input.aoc", nil)
+	aoc.Local(part1, "part1", "sample.aoc", 5)
+	aoc.Local(part1, "part1", "input.aoc", 772)
+	aoc.Local(part2, "part2", "sample2.aoc", 2)
+	aoc.Local(part2, "part2", "input.aoc", 423227545768872)
 }
 
 func part1(content string) any {
@@ -37,21 +37,6 @@ func part1(content string) any {
 	return total
 }
 
-func countPathsFrom(paths map[string][]string, from, to string, excludes []string) int {
-	return 0
-}
-
-func backtrack(backpaths map[string][]string, end, start string, count int) int {
-	if end == start {
-		return count
-	}
-	total := 0
-	for _, parent := range backpaths[end] {
-		total += backtrack(backpaths, parent, start, count)
-	}
-	return total
-}
-
 func part2(content string) any {
 	lines := aoc.ParseLines(content)
 	rxIds := regexp.MustCompile("[a-z]+")
@@ -73,22 +58,147 @@ func part2(content string) any {
 		}
 	}
 
-	// dacParents := backpaths["dac"]
-	// fftParents := backpaths["fft"]
-	// fmt.Printf("dac parents: %v\n", dacParents)
-	// fmt.Printf("fft parents: %v\n", fftParents)
-	dacFirst := backtrack(backpaths, "fft", "dac", 1)
-	fftFirst := backtrack(backpaths, "dac", "fft", 1)
-	total := 0
-	if fftFirst > 0 {
-		backToSvr := backtrack(backpaths, "fft", "svr", 1)
-		backToDac := backtrack(backpaths, "out", "dac", 1)
-		total = backToDac * backToSvr * fftFirst
-	} else {
-		backToSvr := backtrack(backpaths, "dac", "svr", 1)
-		backToDac := backtrack(backpaths, "out", "fft", 1)
-		total = backToDac * backToSvr * dacFirst
+	queue := make([]string, 0)
+	visited := make(map[string]bool)
+	queue = append(queue, "out")
+	visited["out"] = true
+	for len(queue) > 0 {
+		current := queue[0]
+		queue = queue[1:]
+		for _, parent := range backpaths[current] {
+			if !visited[parent] {
+				queue = append(queue, parent)
+				visited[parent] = true
+			}
+		}
 	}
 
-	return total
+	// first ensure both maps have all devices, even
+	// if the list of parents/children are empty
+	for _, value := range paths {
+		for _, id := range value {
+			_, ok := paths[id]
+			if !ok {
+				paths[id] = make([]string, 0)
+			}
+		}
+	}
+	for _, value := range backpaths {
+		for _, id := range value {
+			_, ok := backpaths[id]
+			if !ok {
+				backpaths[id] = make([]string, 0)
+			}
+		}
+	}
+
+	idList := make([]string, 0)
+	for key := range paths {
+		idList = append(idList, key)
+	}
+
+	moved := make(map[string]bool)
+	sortedIdList := make([]string, 0, len(idList))
+
+	var hasParent = func(id string) bool {
+		for _, parent := range backpaths[id] {
+			if !moved[parent] {
+				return true
+			}
+		}
+		return false
+	}
+
+	for len(idList) > 0 {
+		for _, id := range idList {
+			if !hasParent(id) {
+				sortedIdList = append(sortedIdList, id)
+				moved[id] = true
+			}
+		}
+		newIndex := 0
+		for i := range idList {
+			id := idList[i]
+			if !moved[id] {
+				if newIndex != i {
+					idList[newIndex] = idList[i]
+				}
+				newIndex++
+			}
+		}
+		// resize slice, chopping off end
+		idList = idList[:newIndex]
+	}
+
+	// fmt.Println(sortedIdList)
+
+	indexForDevice := make(map[string]int)
+	for i, id := range sortedIdList {
+		indexForDevice[id] = i
+	}
+
+	counts := make([]int, len(sortedIdList))
+
+	// first loop, find first of 'dac' or 'fft'
+	// counts is total ways to get to the device
+	start := indexForDevice["svr"]
+	counts[start] = 1 // visiting svr first, need to find 'dac' or 'fft'
+	for i := start; i < len(sortedIdList); i++ {
+		id := sortedIdList[i]
+		if id == "dac" || id == "fft" {
+			// clear counts past, so we only count paths flowing
+			// through this device
+			for j := i + 1; j < len(sortedIdList); j++ {
+				counts[j] = 0
+			}
+			start = i
+			break
+		}
+
+		// add current counts to children
+		for _, child := range paths[id] {
+			childIndex := indexForDevice[child]
+			counts[childIndex] += counts[i]
+		}
+	}
+
+	// second loop, find other of 'dac' or 'fft'
+	// counts is total ways to get to the device
+	for i := start; i < len(sortedIdList); i++ {
+		id := sortedIdList[i]
+		if i != start && (id == "dac" || id == "fft") {
+			// clear counts past, so we only count paths flowing
+			// through this device
+			for j := i + 1; j < len(sortedIdList); j++ {
+				counts[j] = 0
+			}
+			start = i
+			break
+		}
+
+		// add current counts to children
+		for _, child := range paths[id] {
+			childIndex := indexForDevice[child]
+			counts[childIndex] += counts[i]
+		}
+	}
+
+	// third loop, just looking for end, counts should only include
+	// paths going through both fft and dac
+	result := -1
+	for i := start; i < len(sortedIdList); i++ {
+		id := sortedIdList[i]
+		if id == "out" {
+			result = counts[i]
+			break
+		}
+
+		// add current counts to children
+		for _, child := range paths[id] {
+			childIndex := indexForDevice[child]
+			counts[childIndex] += counts[i]
+		}
+	}
+
+	return result
 }
