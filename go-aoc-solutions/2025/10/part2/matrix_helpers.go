@@ -91,10 +91,29 @@ func (m *Matrix) String() string {
 		maxColumnLengths[i] = maxColumnLength
 	}
 
-	rows[0] = "  ┌" + strings.Join(identifierCells, " ") + "┐"
-	rows[len(rows)-1] = fmt.Sprintf("  └%s┘", strings.Repeat(" ", totalRowLength))
+	rows[0] = "      ┌" + strings.Join(identifierCells, " ") + "┐"
+	rows[len(rows)-1] = fmt.Sprintf("      └%s┘", strings.Repeat(" ", totalRowLength))
 	for i := 0; i < m.Rows; i++ {
-		rows[i+1] = fmt.Sprintf("%2d│%s│", i, strings.Join(cells[i*m.Cols:(i+1)*m.Cols], " "))
+		rows[i+1] = fmt.Sprintf("%2d(%2d)│%s│", i, m.OriginalRows[i], strings.Join(cells[i*m.Cols:(i+1)*m.Cols], " "))
 	}
 	return strings.Join(rows, "\n")
+}
+
+func (m *Matrix) GetWolframString() string {
+	// see: https://www.wolframalpha.com/input/?i=Reduced+row+echelon+form&f1=%7B%7B3%2C+i%2C+2%2C3%7D%2C+%7B2%2Bi%2C+1%2C+3%2C1%7D%7D&f=ReducedRowEchelon.theMatrix_%7B%7B3%2C+i%2C+2%2C3%7D%2C+%7B2%2Bi%2C+1%2C+3%2C1%7D%7D
+	// format: {{r0c0, r0c1, r0c2},{r1c0, r1c1, r1c2}}
+	rows := make([]string, m.Rows)
+	for r, values := range m.Data {
+		valuesAsStrings := make([]string, len(values))
+		for i, value := range values {
+			valuesAsStrings[i] = strconv.Itoa(value)
+		}
+		rows[r] = fmt.Sprintf("{%s}", strings.Join(valuesAsStrings, ", "))
+	}
+	return fmt.Sprintf("{%s}", strings.Join(rows, ", "))
+}
+
+func (m *Matrix) Report(message string) {
+	fmt.Println(message)
+	fmt.Println(m)
 }
