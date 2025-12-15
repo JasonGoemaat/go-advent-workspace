@@ -98,3 +98,8 @@ func (m *Matrix) String() string {
 	}
 	return strings.Join(rows, "\n")
 }
+
+func (m *Matrix) Report(message string) {
+	fmt.Println(message)
+	fmt.Println(m)
+}
