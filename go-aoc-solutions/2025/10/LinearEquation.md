@@ -9,6 +9,7 @@ Sample
     
     {10,11,11,5,10,5}
 
+
     1a +    1b +    1c +    0d  = 10    (joltage 0)
     1a +    0b +    1c +    1d  = 11    (joltage 1)
     1a +    0b +    1c +    1d  = 11    (joltage 2)
@@ -66,3 +67,35 @@ But what about this case?
 In this case button a can affect joltage 0, button b can affect
 joltage 1, and button c can affect both joltages.  There are 
 two possible solutions.   You could press a,b or you could just press c.   There are no more solutions.
+
+## Sample from reddit
+
+Guy was having trouble with this, I was able to figure it out manually...
+
+```
+  1    2    3    4    5    6    7    8    9
+ 1.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.5 | 20.5
+ 0.0  1.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0 |  5.0
+ 0.0  0.0  1.0  0.0  0.0  0.0  0.0  0.0 -1.0 |  2.0
+ 0.0  0.0  0.0  1.0  0.0  0.0  0.0  0.0 -0.5 | -7.5
+ 0.0  0.0  0.0  0.0  1.0  0.0  0.0  0.0  1.0 | 20.0
+ 0.0  0.0  0.0  0.0  0.0  1.0  0.0  0.0  0.5 |  7.5
+ 0.0  0.0  0.0  0.0  0.0  0.0  1.0  0.0  1.0 | 35.0
+ 0.0  0.0  0.0  0.0  0.0  0.0  0.0  1.0  0.0 | 19.0
+                                         -15
+
+ 13    5   17    0    5    0   20   19   15
+  1    2    3    4    5    6    7    8    9
+ 1.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.5 | 13.0
+ 0.0  1.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0 |  5.0
+ 0.0  0.0  1.0  0.0  0.0  0.0  0.0  0.0 -1.0 | 17.0
+ 0.0  0.0  0.0  1.0  0.0  0.0  0.0  0.0 -0.5 |  0.0
+ 0.0  0.0  0.0  0.0  1.0  0.0  0.0  0.0  1.0 |  5.0
+ 0.0  0.0  0.0  0.0  0.0  1.0  0.0  0.0  0.5 |  0.0
+ 0.0  0.0  0.0  0.0  0.0  0.0  1.0  0.0  1.0 | 20.0
+ 0.0  0.0  0.0  0.0  0.0  0.0  0.0  1.0  0.0 | 19.0
+                                         -15
+
+ 13, 5, 17, 0, 5, 0, 20, 19, 15
+ ```
+ 
