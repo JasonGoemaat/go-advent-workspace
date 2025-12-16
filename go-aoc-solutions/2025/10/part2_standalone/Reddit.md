@@ -45,52 +45,6 @@ in the minimum number of presses.   You can change it to output all
 solutions if you want to see if a solution that seems valid is actually
 valid but does not result in the minimum number of presses.
 
-Here is the running code:
-
-```go
-var explain = false
-var outputEach = true
-var input = ""
-// var input = "[..#.##.##] (0,1,2,3,4,5,8) (2,3,5,7) (2,5,6,7) (0,3,4,5,6,7,8) (0,2,4,6,7,8) (0,1,2,4,5,8) (0,2,4,5,6) (0,1,3,4,7,8) (0,1) (2,3,6) {55,25,58,54,55,53,44,43,42}"
-// var input = "[###..#...#] (3,6,7) (1,2,6) (0,2,3,4,5,6,9) (1) (0,1,2,5,6,7) (0,1,2,3,6,7,8,9) (0,1,2,3,5,6,8,9) (1,2,3,4,5,6,8,9) (0,5,6,8,9) (1,2,4,7,9) (0,3,8,9) (0,2,4,5,6,7,8) (2,3,5,6,8,9) {56,74,68,51,33,39,58,48,52,69}"
-
-func main() {
-	if len(input) == 0 {
-		scanner := bufio.NewScanner(os.Stdin)
-		for scanner.Scan() {
-			input += scanner.Text() + "\r\n"
-		}
-	}
-	re := regexp.MustCompile("[^\r\n]+")
-	lines := re.FindAllString(input, -1)
-	sum := 0
-	for i, line := range lines {
-		if outputEach {
-			fmt.Printf("Line %d: %s\n", i, line)
-		}
-		minPresses, solutions := solveLine(line)
-		sum += minPresses
-		if outputEach {
-			for _, solution := range solutions {
-				if solution.TotalPresses != minPresses {
-					break
-				}
-				fmt.Printf("  %d presses: %v\n", solution.TotalPresses, solution.Presses)
-			}
-		}
-	}
-	fmt.Println()
-	fmt.Printf("Result: %d\n", sum)
-}
-
-func solveLine(line string) (int, []MatrixSolution) {
-	m := ParsePuzzle(line)
-	m.RREFRecurse(0, 0, explain)
-	solutions := m.Solve()
-	return solutions[0].TotalPresses, solutions
-}
-```
-
 I use an integer matrix, I didn't want to deal with floats and wanted to
 be able to reason through exactly what was happening since this is the
 first time I'm doing an operation like this.  This makes it easy to reason
@@ -113,16 +67,14 @@ a zero.   The last column has the whole joltage numbers.
 
 Here is the first sample after parsing:
 
-```
-      ┌ 0  1  2  3  4  5  6┐
- 0( 0)│ 0  0  0  0  1  1  3│
- 1( 1)│ 0  1  0  0  0  1  5│
- 2( 2)│ 0  0  1  1  1  0  4│
- 3( 3)│ 1  1  0  1  0  0  7│
- MaxP └ 7  5  4  4  3  3  0┘
- ```
+        ┌ 0  1  2  3  4  5  6┐
+    0( 0)│ 0  0  0  0  1  1  3│
+    1( 1)│ 0  1  0  0  0  1  5│
+    2( 2)│ 0  0  1  1  1  0  4│
+    3( 3)│ 1  1  0  1  0  0  7│
+    MaxP └ 7  5  4  4  3  3  0┘
 
-So you can see button 4 (column 4) has '1's in rows 0 (joltage value 3) and 2 (joltage value 4).
+So you can see button 4 (column 4) has '1's in rows 0 (target joltage 3) and 2 (target joltage 4).
 That means pressing button 4 will increase each of those joltages by 1.   That also lets me
 constrain the maximum presses (MaxP, which is a separate array, not part of the matrix)
 of that button, it can't be pressed more than 3 times or it would overflow the joltage in row 2.
@@ -132,58 +84,70 @@ value.   The buttons for those columns are then dependent, if only those columns
 each button must be pressed an exact number of times to achieve the required remaining joltage
 after other buttons are pressed.   Here is what the matrix looks like after I reduce:
 
-```
-      ┌ 0  1  2  3  4  5  6┐
- 0( 3)│ 1  0  0  0  1 -1  2│
- 1( 1)│ 0  1  0  0  0  1  5│
- 2( 2)│ 0  0  1  0  1 -1  1│
- 3( 0)│ 0  0  0  1  0  1  3│
- MaxP └ 7  5  4  3  4  3  0┘
-```
+        ┌ 0  1  2  3  4  5  6┐
+    0( 3)│ 1  0  0  0  1 -1  2│
+    1( 1)│ 0  1  0  0  0  1  5│
+    2( 2)│ 0  0  1  0  1 -1  1│
+    3( 0)│ 0  0  0  1  0  1  3│
+    MaxP └ 7  5  4  3  4  3  0┘
 
-So there are two button columns (4 and 5, column 6 is the joltage remember) that have 
+So there are two button columns (4 and 5, column 6 is the target joltage remember) that have 
 multiple numbers in them.  I permute the possible presses for those buttons, button
-4 can be pressed 0-4 times and button 5 can be pressed 0-3 times.   I first copy the
-jojltages to a new array and for each of those combinations I adjust the remaining
-joltage.   Then I go through each of the remaining columns which will have their presses
-defined by the remaining joltage.   No presses should be negative and all joltages
-should be 0 for a valid solution.  Theses are the valid possible presses to get the
-minimum number of presses (10), the first one is the result shown on the puzzle page:
+4 can be pressed 0-4 times and button 5 can be pressed 0-3 times.   I first create an empty
+joltages[] array and for each of those combinations I multiply the number of presses by the
+value in that button's column for each joltage and add it to the joltages[] array value.
+
+For example I start with joltages `[0 0 0 0]`.   When I press button '4' 3 times it changes
+to `[3 0 3 0]` (because the values in column 4 are 1,0,1,0 times 3 presses).   If I then
+press button '5' 2 times it changes to `[1 2 1 2]` (because the values in column 5 are
+-1,1,-1,1 times 2 presses).  `presses[]` is then `[0 0 0 0 3 2]`
+
+Then I go through each of the remaining dependent columns (buttons) which will have their presses
+defined by the remaining joltage: `[targetJoltages[i] - joltages[i]) / matrix[i, button]`
+
+
+* Column 0 (button 0) is `[1 0 0 0]` so it has to be pressed 1 time to change joltages to `[2 2 1 2]` and presses[] is `[1 0 0 0 3 2]`
+* Column 1 (button 1) is `[0 1 0 0]` so it has to be pressed 3 times to change joltages to `[2 5 1 2]` and presses[] is `[1 3 0 0 3 2]`
+* Column 2 (button 2) is `[0 0 1 0]`, but `joltage[2]` is 1 and that's the target os it's pressed 0 times, not changing the arrays
+* Column 3 (button 3) is `[0 0 0 1]`, so it has to be pressed 1 time to change joltages to `[2 5 1 3]` and presses[] is `[1 3 0 1 3 2]`
+* No buttons had to be pressed a negative number of times and the joltages array is the same as the initial joltages (column 6) so this is valid solution
+
+That series represents one of the minimum combinations and the first one in the list
+which is the one specified on the advent of code puzzle sample.  Here are all the possible
+ways to press the buttons 10 times to achieve the required joltages:
 
     10 presses: [1 3 0 3 1 2]
     10 presses: [1 5 0 1 3 0]
     10 presses: [1 2 0 4 0 3]
     10 presses: [1 4 0 2 2 1]
 
-I was happy with my code for permuting combinations:
+I was happy with my code for permuting combinations.   I initialize the `presses[]`
+array with zeroes and permute the values for the variable buttons (`variableButtons[]`
+is an array of button indexes/column indexes for the variable buttons).   I just
+go in order and when the first overflows I reset and add to the next, etc.   When
+the last overflows I am done.
 
-```go
-donePermuting := false
-permuteVariableButtons := func() bool {
-    // increase from first to last, when last overflows we are done
-    for _, c := range variableButtons {
-        presses[c]++
-        if presses[c] <= m.MaxPresses[c] {
-            return true // no overflow, we are fine
+    donePermuting := false
+    permuteVariableButtons := func() bool {
+        // increase from first to last, when last overflows we are done
+        for _, c := range variableButtons {
+            presses[c]++
+            if presses[c] <= m.MaxPresses[c] {
+                return true // no overflow, we are fine
+            }
+            presses[c] = 0
         }
-        presses[c] = 0
+        donePermuting = true
+        return false
     }
-    donePermuting = true
-    return false
-}
 
-for ; !donePermuting; permuteVariableButtons() {
-    // ... clear 'presses' for dependent columns, variable columns remain
-    // initialize joltages[] array from the last matrix column
-    // adjust joltages[] for variable button values set by permuting
-    // assign presses[] for dependant buttons based on joltages and subtract from joltages
-    // verify no presses are negative and all joltages are 0 - add solution to list
-}
-```
-
-Since I wanted to track the presses, I create a list of variable and dependent columns.
-The permuting happens over the indexes representing variable buttons in the presses[]
-array.
+    for ; !donePermuting; permuteVariableButtons() {
+        // ... clear 'presses' for dependent columns, variable columns remain
+        // initialize joltages[] array from the last matrix column
+        // subtract from joltages[] for based on variable button presses[]
+        // assign presses[] for dependant buttons based on remaining joltages and subtract
+        // verify no presses are negative and all joltages are 0 - add solution to list
+    }
 
 The result of the solve function is an array of `MatrixSolution` sorted by total presses
 which I can then examine to check and help find out where my code might have gone wrong.
@@ -191,12 +155,10 @@ So if you're having trouble and getting a valid solution but not the minimum sol
 this might help figure out why you don't have the minimum solution, or if your solution
 is even a valid one.
 
-```go
-type MatrixSolution struct {
-	Presses      []int // presses for each button, in original button order
-	TotalPresses int   // total presses - lower is better
-}
-```
+    type MatrixSolution struct {
+        Presses      []int // presses for each button, in original button order
+        TotalPresses int   // total presses - lower is better
+    }
 
 Links:
 
