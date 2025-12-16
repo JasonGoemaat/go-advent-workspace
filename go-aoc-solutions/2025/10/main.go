@@ -14,7 +14,7 @@ func main() {
 	aoc.Local(part1, "part1", "sample.aoc", 7)
 	aoc.Local(part1, "part1", "input.aoc", 530)
 	aoc.Local(part2, "part2", "sample.aoc", 33)
-	aoc.Local(part2, "part2", "input.aoc", nil)
+	aoc.Local(part2, "part2", "input.aoc", 20172)
 }
 
 // [.##.] (3) (1,3) (2) (2,3) (0,2) (0,1) {3,5,4,7}

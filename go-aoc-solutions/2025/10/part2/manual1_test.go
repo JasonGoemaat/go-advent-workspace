@@ -3,6 +3,7 @@ package part2
 import (
 	"fmt"
 	"testing"
+	"time"
 )
 
 func Test1(t *testing.T) {
@@ -18,6 +19,81 @@ func TestSample1(t *testing.T) {
 	fmt.Println("Input for Wolfram:", matrix.GetWolframString())
 	matrix.RREF()
 	matrix.Report("RREF()")
+	solutions := matrix.Solve()
+	for i, solution := range solutions {
+		fmt.Printf("Solution %d has %d total presses: %v\n", i, solution.TotalPresses, solution.Presses)
+	}
+}
+
+func TestSample2(t *testing.T) {
+	input := "[...#.] (0,2,3,4) (2,3) (0,4) (0,1,2) (1,2,3,4) {7,5,12,7,2}" // test 2, should be 12 presses, but I find 10
+	matrix := ParsePuzzle(input)
+	matrix.Report(fmt.Sprintf("Parsed: %s", input))
+	fmt.Println("Input for Wolfram:", matrix.GetWolframString())
+	// matrix.RREF()
+	matrix.RREFRecurse(0, 0, false)
+	matrix.Report("RREF()")
+
+	start := time.Now()
+	var solutions []MatrixSolution
+	iterations := 1000
+	for _ = range iterations {
+		solutions = matrix.Solve()
+	}
+	duration := time.Since(start)
+
+	for i, solution := range solutions {
+		fmt.Printf("Solution %d has %d total presses: %v\n", i, solution.TotalPresses, solution.Presses)
+	}
+
+	minPresses := solutions[0].TotalPresses
+	minCount := 0
+	for _, solution := range solutions {
+		if solution.TotalPresses == minPresses {
+			minCount++
+		} else {
+			break
+		}
+	}
+	fmt.Printf("Found %d solutions %d times with %d presses in %s\n", minCount, iterations, minPresses, duration)
+}
+
+func TestSample3(t *testing.T) {
+	// sample 3 input - minimum presses 11: 5,0,5,1
+	input := "[.###.#] (0,1,2,3,4) (0,3,4) (0,1,2,4,5) (1,2) {10,11,11,5,10,5}"
+	matrix := ParsePuzzle(input)
+	matrix.Report(fmt.Sprintf("Parsed: %s", input))
+	fmt.Println("Input for Wolfram:", matrix.GetWolframString())
+	// matrix.RREF()
+	matrix.RREFRecurse(0, 0, true)
+	matrix.Report("RREF()")
+
+	start := time.Now()
+	var solutions []MatrixSolution
+	iterations := 1000
+	for _ = range iterations {
+		solutions = matrix.Solve()
+	}
+	duration := time.Since(start)
+
+	fmt.Printf("Checked %d solutions\n", len(solutions))
+	for i, solution := range solutions {
+		fmt.Printf("Solution %d has %d total presses: %v\n", i, solution.TotalPresses, solution.Presses)
+	}
+
+	if len(solutions) == 0 {
+		panic("no solutions")
+	}
+	minPresses := solutions[0].TotalPresses
+	minCount := 0
+	for _, solution := range solutions {
+		if solution.TotalPresses == minPresses {
+			minCount++
+		} else {
+			break
+		}
+	}
+	fmt.Printf("Found %d solutions %d times with %d presses in %s\n", minCount, iterations, minPresses, duration)
 }
 
 /*

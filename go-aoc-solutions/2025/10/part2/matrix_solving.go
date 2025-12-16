@@ -1,8 +1,14 @@
 package part2
 
+import (
+	"fmt"
+	"slices"
+)
+
 type Solution struct {
-	Buttons []int // how many times each button is pressed
-	Presses int   // total presses
+	Presses []int // how many times each button is pressed
+	Total   int   // total presses
+	MS      int   // milliseconds
 }
 
 // prep matrix, attempting to put in reduced row echelon form
@@ -21,9 +27,14 @@ func (m *Matrix) Prep() {
 //     Call RREFRecurse(row+1, col+1)
 //  2. If all values are 0, move on to next column calling RREFRecurse(row1, col + 1)
 //  3. If there are no '1' or '-1', but there are higher values (i.e. '-3' or '2'), panic
-func (m *Matrix) RREFRecurse(row, col int) {
+func (m *Matrix) RREFRecurse(row, col int, explain bool) {
+	m.ConstrainMaxPresses()
 	// exit if we're past the last button column or the bottom row
 	if row >= m.Rows || col >= m.Cols-1 {
+		if explain {
+			fmt.Printf("Explain %d,%d: done\n", row, col)
+			fmt.Println(m)
+		}
 		return
 	}
 	allZero := true
@@ -37,6 +48,10 @@ func (m *Matrix) RREFRecurse(row, col int) {
 		}
 		if value == -1 {
 			m.MultiplyRow(r, -1) // fix so it is +1
+			if explain {
+				fmt.Printf("Multiplying row %d by -1\n", r)
+				fmt.Println(m)
+			}
 			goodRow = r
 			allZero = false
 			break
@@ -51,41 +66,85 @@ func (m *Matrix) RREFRecurse(row, col int) {
 		// not first row, so swap
 		if goodRow > row {
 			m.SwapRows(row, goodRow)
+			if explain {
+				fmt.Printf("Explain %d,%d: sawpping good row %d with expected %d\n", row, col, goodRow, row)
+				fmt.Println(m)
+			}
 		}
 
-		// fix-up rows above to make change their values in col to 0
+		// fix-up non-zero rows below
+		for r := row + 1; r < m.Rows; r++ {
+			value := m.Get(r, col)
+			if value != 0 {
+				m.AddRow(row, r, -value)
+				if explain {
+					fmt.Printf("Explain %d,%d: Adding row %d with factor %d to row %d\n", row, col, row, -value, r)
+					fmt.Println(m)
+				}
+			}
+		}
+		// fix-up rows above to change their values in col to 0
 		for r := row - 1; r >= 0; r-- {
 			value := m.Get(r, col)
 			if value != 0 {
 				m.AddRow(row, r, -value)
+				if explain {
+					fmt.Printf("Explain %d,%d: Adding row %d to row %d with factor %d\n", row, col, row, r, -value)
+					fmt.Println(m)
+				}
 			}
 		}
 
 		// move to next row and col
-		m.RREFRecurse(row+1, col+1)
+		m.RREFRecurse(row+1, col+1, explain)
 		return
 	}
 
 	// if all zeros, move on to next column, stay on current row
 	if allZero {
-		m.RREFRecurse(row, col+1)
+		m.RREFRecurse(row, col+1, explain)
 	}
 
 	// not all zeros and no 1s found, we can't continue
 	// TODO:  As an edge case, we may be able to continue if there exists
 	// a '1' or '-1' *somewhere* in the submatrix, by just swapping columns
 	// to put that '1' or '-1' in column 'col'
-	return
+
+	// // TESTING: Move on to next row AND column - WORKS!
+	// m.RREFRecurse(row+1, col+1, explain)
+
+	// OPTIMIZING: if there is a 1 in a future column in any row, swap the columns and try again
+	for r := row; r < m.Rows; r++ {
+		for c := col + 1; c < m.Cols-1; c++ {
+			if m.Get(r, c) == 1 || m.Get(r, c) == -1 {
+				if explain {
+					if explain {
+						fmt.Printf("Explain %d,%d: swapping columns %d and %d to put a '1' first\n", row, col, col, c)
+						fmt.Println(m)
+					}
+				}
+				m.SwapCols(c, col)
+				m.RREFRecurse(row, col, explain)
+				return
+			}
+		}
+	}
 }
 
 // Attempt to convert to Reduced Row Echelon Form
 func (m *Matrix) RREF() {
-	m.RREFRecurse(0, 0)
+	m.RREFRecurse(0, 0, false)
 }
 
-// Lower MaxPresses[].  Look for rows that are all one sign
-// If all negative, multiply by -1 to make all positive.
-// Constrain the buttons specified in that row so that they
+// Lower MaxPresses[].  Look for rows that are all one sign.  If all negative,
+// multiply by -1 to make all positive. Constrain the buttons specified in
+// that row because pressing them more would overflow the joltage for the row.
+// TODO: Not currently calling, but it may be useful each time we RREFRecurse
+// or just after doing all recursion.
+// TODO: It may be helpful to try different things to, for example in the
+// first sample I end up with button 0 being constrained to 7, but if I add
+// row 3 to row 0, that will let me constrain it to 5.   Doesn't matter in
+// this case because button 0 is not one of the buttons I need to brute-force.
 func (m *Matrix) ConstrainMaxPresses() {
 	for r := range m.Rows {
 		foundNegative := false
@@ -124,4 +183,175 @@ func (m *Matrix) ConstrainMaxPresses() {
 			}
 		}
 	}
+}
+
+type MatrixSolution struct {
+	Presses      []int // presses for each button
+	TotalPresses int   // total presses - lower is better
+}
+
+func MatrixSolutionSortFunc(a, b MatrixSolution) int {
+	if a.TotalPresses < b.TotalPresses {
+		return -1
+	}
+	if a.TotalPresses > b.TotalPresses {
+		return 1
+	}
+	return 0
+}
+
+func MatrixSolutionLess() {
+	solutions := make([]MatrixSolution, 5)
+	slices.SortFunc(solutions, MatrixSolutionSortFunc)
+}
+
+func (m *Matrix) Solve() []MatrixSolution {
+	// first I need to figure out buttons that can be dependent, these have
+	// a single '1' in the column and the rest are '0'.   These are the
+	// pivots.  Also buttons that are variable, they affect multiple joltages.
+	// I can brute-force the variable buttons first and then each dependent
+	// button will have to be pressed the same number of times as the remaining
+	// joltage for the answer.
+	dependentButtons := make([]int, 0, m.Cols-1)
+	dependentButtonJoltage := make([]int, 0, m.Cols-1)
+	variableButtons := make([]int, 0, m.Cols-1)
+	for c := range m.Cols - 1 {
+		oneRow := -1
+		for r := range m.Rows {
+			if m.Get(r, c) == 1 {
+				if oneRow == -1 {
+					// first '1' we found, record location
+					oneRow = r
+				} else {
+					// uh oh, there is more than one '1', break with failure
+					oneRow = -1
+					break
+				}
+			} else {
+				if m.Get(r, c) != 0 && m.Get(r, c) != 1 {
+					oneRow = -1
+					break
+				}
+			}
+		}
+		if oneRow == -1 {
+			variableButtons = append(variableButtons, c)
+		} else {
+			// button index
+			dependentButtons = append(dependentButtons, c)
+			// joltage affected by that button alone
+			dependentButtonJoltage = append(dependentButtonJoltage, oneRow)
+		}
+	}
+
+	// for each variable button, get a list of joltages affected by the button
+	variableButtonJoltages := make([][]int, len(variableButtons))
+	for i, c := range variableButtons {
+		joltages := make([]int, 0, m.Rows)
+		for r := range m.Rows {
+			if m.Get(r, c) != 0 {
+				joltages = append(joltages, r)
+			}
+		}
+		variableButtonJoltages[i] = joltages
+	}
+
+	// now we permute the variable buttons through their ranges and try them all,
+	// keeping track of presses which will be copied to solutions
+	presses := make([]int, m.Cols-1)
+	donePermuting := false
+	permuteVariableButtons := func() bool {
+		// increase from first to last, when last overflows we are done
+		for _, c := range variableButtons {
+			presses[c]++
+			if presses[c] <= m.MaxPresses[c] {
+				return true // no overflow, we are fine
+			}
+			presses[c] = 0
+		}
+		donePermuting = true
+		return false
+	}
+	joltages := make([]int, m.Rows)
+	permutationCount := 1
+	for _, c := range variableButtons {
+		permutationCount *= (m.MaxPresses[c] + 1)
+	}
+
+	solutions := make([]MatrixSolution, 0, permutationCount)
+	for ; !donePermuting; permuteVariableButtons() {
+		// initialize joltages
+		for r := range m.Rows {
+			joltages[r] = 0
+		}
+		for _, c := range dependentButtons {
+			presses[c] = 0
+		}
+		for i, c := range variableButtons {
+			if presses[c] != 0 {
+				for _, r := range variableButtonJoltages[i] {
+					joltages[r] += m.Get(r, c) * presses[c]
+				}
+			}
+		}
+
+		// check that joltages are less than required since remaining
+		// dependant buttons can only add 1 per press
+		valid := true
+		for r, joltage := range joltages {
+			if joltage > m.Get(r, m.Cols-1) {
+				valid = false
+				break
+			}
+		}
+
+		if !valid {
+			continue
+		}
+
+		// now dependent buttons will be 1:1
+		for i, c := range dependentButtons {
+			r := dependentButtonJoltage[i]
+			p := m.Get(r, m.Cols-1) - joltages[r]
+			joltages[r] += p
+			presses[c] = p
+		}
+
+		// make sure all joltages now match - this may not be required...
+		// if any joltages affected by ONLY variable buttons remain, that
+		// would cause this.
+		for r, joltage := range joltages {
+			if joltage != m.Get(r, m.Cols-1) {
+				valid = false
+			}
+		}
+
+		if !valid {
+			continue
+		}
+
+		// we have a solution
+		totalPresses := 0
+		for _, p := range presses {
+			totalPresses += p
+		}
+
+		savePresses := make([]int, len(presses))
+		copy(savePresses, presses)
+		solutions = append(solutions, MatrixSolution{savePresses, totalPresses})
+	}
+
+	slices.SortFunc(solutions, MatrixSolutionSortFunc)
+	return solutions
+}
+
+// Simplified function to handle the parsing and boilerplate calls
+// and return the minimum presses from all solutions we found.  For
+// final result and individual testing when we just care about
+// comparing one result to another method.
+func SimpleSolve(input string) int {
+	matrix := ParsePuzzle(input)
+	matrix.RREFRecurse(0, 0, false)
+	solutions := matrix.Solve()
+	return solutions[0].TotalPresses
 }

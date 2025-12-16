@@ -2,6 +2,7 @@ package part2
 
 import (
 	"fmt"
+	"math"
 	"regexp"
 	"strconv"
 	"strings"
@@ -41,6 +42,15 @@ func ParsePuzzle(input string) *Matrix {
 	for y := range joltages {
 		matrix.Set(y, len(buttons), joltages[y])
 	}
+	for c := range len(buttons) {
+		max := math.MaxInt
+		for r := range matrix.Rows {
+			if matrix.Get(r, c) == 1 && joltages[r] < max {
+				max = joltages[r]
+			}
+		}
+		matrix.MaxPresses[c] = max
+	}
 
 	return matrix
 }
@@ -49,6 +59,9 @@ func (m *Matrix) String() string {
 	rows := make([]string, m.Rows+2) // extra rows for first and last
 	cells := make([]string, m.Rows*m.Cols)
 	maxColumnLengths := make([]int, m.Cols)
+
+	// get string representation for each matrix cell and calculate maximum
+	// lengths for each column to align them
 	for i := 0; i < m.Rows; i++ {
 		for j := 0; j < m.Cols; j++ {
 			index := i*m.Cols + j
@@ -60,28 +73,9 @@ func (m *Matrix) String() string {
 		}
 	}
 
-	for i, value := range cells {
-		length := len(value)
-		diff := maxColumnLengths[i%m.Cols] - length
-		if diff > 0 {
-			cells[i] = strings.Repeat(" ", diff) + cells[i]
-		}
-	}
-	totalRowLength := len(maxColumnLengths) - 1 // separating spaces
-	for _, l := range maxColumnLengths {
-		totalRowLength += l
-	}
-	identifierCells := make([]string, m.Cols)
-	for i := range m.Cols {
-		identifier := strconv.Itoa(i)
-		identifierCells[i] = strings.Repeat(" ", maxColumnLengths[i]-len(identifier)) + identifier
-		if len(identifierCells[i]) > maxColumnLengths[i] {
-			maxColumnLengths[i] = len(identifierCells[i])
-		}
-	}
 	// set max column lengths for all to be the same, if we don't do this it
 	// will be more compressed but maybe harder to read
-	maxColumnLength := maxColumnLengths[0]
+	maxColumnLength := 2 // make at least 2 for negatives and double-digit column indexes
 	for i := range maxColumnLengths {
 		if maxColumnLengths[i] > maxColumnLength {
 			maxColumnLength = maxColumnLengths[i]
@@ -91,8 +85,40 @@ func (m *Matrix) String() string {
 		maxColumnLengths[i] = maxColumnLength
 	}
 
+	// left-pad each cell for alignment
+	for i, value := range cells {
+		length := len(value)
+		diff := maxColumnLengths[i%m.Cols] - length
+		if diff > 0 {
+			cells[i] = strings.Repeat(" ", diff) + cells[i]
+		}
+	}
+
+	// calculate total row length
+	totalRowLength := len(maxColumnLengths) - 1 // separating spaces
+	for _, l := range maxColumnLengths {
+		totalRowLength += l
+	}
+
+	// add column identifier cells for top row
+	identifierCells := make([]string, m.Cols)
+	for i := range m.Cols {
+		identifier := strconv.Itoa(i)
+		identifierCells[i] = strings.Repeat(" ", maxColumnLengths[i]-len(identifier)) + identifier
+		if len(identifierCells[i]) > maxColumnLengths[i] {
+			maxColumnLengths[i] = len(identifierCells[i])
+		}
+	}
+
+	// add max press cells for bottom row
+	maxPressCells := make([]string, m.Cols)
+	for i := range m.Cols {
+		s := strconv.Itoa(m.MaxPresses[i])
+		maxPressCells[i] = strings.Repeat(" ", maxColumnLengths[i]-len(s)) + s
+	}
+
 	rows[0] = "      ┌" + strings.Join(identifierCells, " ") + "┐"
-	rows[len(rows)-1] = fmt.Sprintf("      └%s┘", strings.Repeat(" ", totalRowLength))
+	rows[len(rows)-1] = fmt.Sprintf(" MaxP └%s┘", strings.Join(maxPressCells, " "))
 	for i := 0; i < m.Rows; i++ {
 		rows[i+1] = fmt.Sprintf("%2d(%2d)│%s│", i, m.OriginalRows[i], strings.Join(cells[i*m.Cols:(i+1)*m.Cols], " "))
 	}

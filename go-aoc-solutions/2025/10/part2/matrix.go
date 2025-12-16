@@ -8,6 +8,16 @@ type Matrix struct {
 	MaxPresses   []int
 }
 
+func (m *Matrix) SwapCols(c1, c2 int) {
+	m.OriginalCols[c1], m.OriginalCols[c2] = m.OriginalCols[c2], m.OriginalCols[c1]
+	m.MaxPresses[c1], m.MaxPresses[c2] = m.MaxPresses[c2], m.MaxPresses[c1]
+	for r := range m.Rows {
+		a, b := m.Get(r, c1), m.Get(r, c2)
+		m.Set(r, c1, b)
+		m.Set(r, c2, a)
+	}
+}
+
 func NewMatrix(rows, cols int) *Matrix {
 	data := make([][]int, rows)
 	for i := range rows {
@@ -21,7 +31,8 @@ func NewMatrix(rows, cols int) *Matrix {
 	for i := range cols {
 		originalCols[i] = i
 	}
-	return &Matrix{Rows: rows, Cols: cols, Data: data, OriginalRows: originalRows, OriginalCols: originalCols}
+	maxPresses := make([]int, cols)
+	return &Matrix{Rows: rows, Cols: cols, Data: data, OriginalRows: originalRows, OriginalCols: originalCols, MaxPresses: maxPresses}
 }
 
 func (m *Matrix) Get(row, col int) int {
