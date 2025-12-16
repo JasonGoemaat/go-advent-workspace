@@ -1,5 +1,13 @@
 [LANGUAGE: GO]
 
+QuickStart:
+
+* Download https://github.com/JasonGoemaat/go-advent-workspace/blob/main/go-aoc-solutions/2025/10/part2_standalone/day10part2.go
+* Edit the variables 'explain', 'output', and 'input' how you wish, it is setup to take puzzles from the standard input and do extensive reporting
+* Install go
+* From the command line go to the directory with you file and run `go run day10part2.go`
+* Paste your puzzle(s) and hit the key combination to terminate input (`CTRL+Z` for windows cmd, `CTRL+D` for bash)
+
 I hadn't used matrices with linear equations really before, so I decided
 to use this puzzle to understand it.   It was kind of hard debugging since
 I would have issues with some puzzles due to a small error that was
@@ -10,7 +18,10 @@ find what lines of my input were the problem.   There are a lot of
 solutions here, but just re-arranging them to run an individual puzzle
 isn't easy as a lot of them have custom libraries for handling AOC.
 Also I haven't seen one that can be made to easily give you the details
-like how many times you have to press each button.
+like how many times you have to press each button.  Thanks to `___ciaran`
+for [his post](https://www.reddit.com/r/adventofcode/comments/1pity70/comment/nu6v5fq/)
+which I was at least able to easily manipulate to run and give answers for
+each puzzle that I could compare to my own.
 
 So what I came up with was a single '.go' file that will solve either
 from a string variable 'input' in the file or from the standard
