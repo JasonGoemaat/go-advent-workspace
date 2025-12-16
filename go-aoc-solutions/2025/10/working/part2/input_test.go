@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	o "github.com/JasonGoemaat/go-aoc-solutions/2025/10/lib"
+	o "github.com/JasonGoemaat/go-aoc-solutions/2025/10/working/lib"
 	"github.com/JasonGoemaat/go-aoc/aoc"
 )
 
